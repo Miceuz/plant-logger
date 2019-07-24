@@ -2,7 +2,7 @@
 import minimalmodbus
 import serial
 from time import sleep, time
-from inluxdb import InfluxDBClient
+from influxdb import InfluxDBClient
 
 
 SENSOR_PORT = '/dev/ttyUSB0'
@@ -30,9 +30,9 @@ while True:
 			point=[
 			{"measurement":"data", 
 			"tags":{"plant":"begonija"}, 
-			"fields":{"temperature":temperature, "moisture":moisture}}]
+			"fields":{"temperature":temperature*1.0, "moisture":moisture*1.0}}]
 			try:
-				dbclient.write(point)
+				dbclient.write_points(point)
 			except:
 				print("#could not post")
 		except(IOError, ValueError):
