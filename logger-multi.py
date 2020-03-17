@@ -4,6 +4,12 @@ from influxdb import InfluxDBClient
 import RPi.GPIO as gpio
 from chirp_modbus import SoilMoistureSensor
 
+import serial
+
+DEFAULT_BAUDRATE = 19200
+DEFAULT_PARITY = serial.PARITY_NONE
+DEFAULT_STOPBITS = 2
+
 
 READING_INTERVAL_S = 3
 SENSOR_PORT = '/dev/ttyUSB0'
