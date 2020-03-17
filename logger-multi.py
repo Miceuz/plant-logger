@@ -24,10 +24,10 @@ def scanBus(serialport, startAddress = 1, endAddress = 247, verbose=False, findO
 			if verbose:
 				print('Trying address: ' + str(i))
 
-			minimalmodbus.CLOSE_PORT_AFTER_EACH_CALL = True
-			minimalmodbus.PARITY=serial.PARITY_NONE
-			minimalmodbus.STOPBITS = serialstopbits
-			minimalmodbus.BAUDRATE = serialbaudrate
+			# minimalmodbus.CLOSE_PORT_AFTER_EACH_CALL = True
+			# minimalmodbus.PARITY=serial.PARITY_NONE
+			# minimalmodbus.STOPBITS = serialstopbits
+			# minimalmodbus.BAUDRATE = serialbaudrate
 			
 			sensor = minimalmodbus.Instrument(serialport, slaveaddress=i)
 			sensor.serial.baudrate = serialbaudrate
