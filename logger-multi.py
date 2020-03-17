@@ -5,6 +5,7 @@ import RPi.GPIO as gpio
 from chirp_modbus import SoilMoistureSensor
 
 import serial
+import minimalmodbus
 
 DEFAULT_BAUDRATE = 19200
 DEFAULT_PARITY = serial.PARITY_NONE
