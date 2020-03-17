@@ -77,10 +77,10 @@ def formatForDb(address, moisture, temperature, sensor_status):
 def postToDb(points):
 	try:
 		dbclient.write_points(points)
-		gpio.output(27, gpio.HIGH)
+		# gpio.output(27, gpio.HIGH)
 	except:
 		print("#could not post")
-		gpio.output(27, gpio.LOW)
+		# gpio.output(27, gpio.LOW)
 
 def logOne(address):
 	global SENSOR_PORT
@@ -91,7 +91,7 @@ def logOne(address):
 		postToDb(formatForDb(address, moisture, temperature, "OK"))
 	except(IOError, ValueError):
 		postToDb(formatForDb(address, "ERROR"))
-		gpio.output(27, gpio.LOW)
+		# gpio.output(27, gpio.LOW)
 		print("#could not read sensor " + str(address))
 
 
