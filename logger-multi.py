@@ -2,6 +2,8 @@
 from time import sleep, time
 from influxdb import InfluxDBClient
 import RPi.GPIO as gpio
+from chirp_modbus import SoilMoistureSensor
+
 
 READING_INTERVAL_S = 3
 SENSOR_PORT = '/dev/ttyUSB0'
