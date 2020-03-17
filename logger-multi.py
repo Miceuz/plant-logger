@@ -95,6 +95,10 @@ def logOne(address):
 		print("#could not read sensor " + str(address))
 
 
+dbclient = InfluxDBClient(host='localhost', port=8086)
+dbclient.switch_database('soil')
+
+
 
 while True:
 	found = scanBus(serialport=SENSOR_PORT, endAddress = 80, findOne=False, verbose=False, serialbaudrate=19200, serialstopbits=2)
