@@ -7,6 +7,8 @@ from chirp_modbus import SoilMoistureSensor
 import serial
 import minimalmodbus
 
+import paho.mqtt.client as paho
+
 DEFAULT_BAUDRATE = 19200
 DEFAULT_PARITY = serial.PARITY_NONE
 DEFAULT_STOPBITS = 2
@@ -15,6 +17,33 @@ DEFAULT_STOPBITS = 2
 READING_INTERVAL_S = 3
 SENSOR_PORT = '/dev/ttyUSB0'
 
+gpio.setmode(gpio.BCM)
+
+GREEN = 25
+RED = 24
+gpio.setup(GREEN, gpio.OUT)
+gpio.setup(RED, gpio.OUT)
+
+led = gpio.LOW
+
+broker = "sensors.technarium.lt"
+port=1883
+def on_publish(client, userdata, result):
+    print("published")
+    pass
+mqtt_client = paho.Client("plant-logger")
+mqtt_client.on_publish = on_publish
+mqtt_client.connect(broker, port)
+
+def blink():
+    global led
+    gpio.output(GREEN, led);
+    if gpio.LOW == led:
+        led = gpio.HIGH
+    else:
+        led = gpio.LOW
+
+error = False;
 
 def scanBus(serialport, startAddress = 1, endAddress = 247, verbose=False, findOne=False, serialbaudrate=DEFAULT_BAUDRATE, serialparity=DEFAULT_PARITY, serialstopbits=DEFAULT_STOPBITS):
 	addresses=[]
@@ -29,7 +58,7 @@ def scanBus(serialport, startAddress = 1, endAddress = 247, verbose=False, findO
 			# minimalmodbus.PARITY=serial.PARITY_NONE
 			# minimalmodbus.STOPBITS = serialstopbits
 			# minimalmodbus.BAUDRATE = serialbaudrate
-			
+
 			sensor = minimalmodbus.Instrument(serialport, slaveaddress=i)
 			sensor.serial.baudrate = serialbaudrate
 			sensor.serial.stopbits = serialstopbits
@@ -37,6 +66,7 @@ def scanBus(serialport, startAddress = 1, endAddress = 247, verbose=False, findO
 
 			addressRead = sensor.read_register(0, functioncode=3)
 			if(i == addressRead):
+                                blink()
 				addresses.append(i)
 				if verbose:
 					print('FOUND!')
@@ -45,7 +75,9 @@ def scanBus(serialport, startAddress = 1, endAddress = 247, verbose=False, findO
 		except (IOError):
 			if verbose:
 				print("nope...")
+                        error = True
 			pass
+                gpio.output(GREEN, gpio.LOW)
 	return addresses
 
 def formatForDb(address, sensor_status):
@@ -81,15 +113,19 @@ def postToDb(points):
 	except:
 		print("#could not post")
 		# gpio.output(27, gpio.LOW)
+import json
 
 def logOne(address):
+        global mqtt_broker
 	global SENSOR_PORT
 	sensor = SoilMoistureSensor(address = address, serialport = SENSOR_PORT)
 	try:
 		moisture = sensor.getMoisture()
 		temperature = sensor.getTemperature()
 		postToDb(formatForDb(address, moisture, temperature, "OK"))
+                ret = mqtt_client.publish('/akademija/sensors', json.dumps({'address':address, 'moisture':moisture, 'temperature':temperature}))
 	except(IOError, ValueError):
+                error = True
 		postToDb(formatForDb(address, "ERROR"))
 		# gpio.output(27, gpio.LOW)
 		print("#could not read sensor " + str(address))
@@ -102,9 +138,18 @@ dbclient.switch_database('soil')
 
 while True:
 	found = scanBus(serialport=SENSOR_PORT, endAddress = 80, findOne=False, verbose=False, serialbaudrate=19200, serialstopbits=2)
-	if found:
+        
+        if found:
 		print("Found " + str(len(found)) + " sensors: " + str(found))
 		for address in found:
 			logOne(address)
+        else:
+            error = True
+        
+        if error:
+            gpio.output(RED, gpio.HIGH)
+	
+        sleep(READING_INTERVAL_S)
+        gpio.output(RED, gpio.LOW)
+        error = False
 
-	sleep(READING_INTERVAL_S)
